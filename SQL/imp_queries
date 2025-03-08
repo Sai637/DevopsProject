@@ -121,5 +121,198 @@ finally:
     if 'connection' in locals() and connection.open:
         connection.close()
         log_message("🔒 Database connection closed.")
+#############################################################################
+
+CREATE TABLE IF NOT EXISTS EMPLOYEES_TABLE (
+    EMPID INT PRIMARY KEY,
+    NAME VARCHAR(100) NOT NULL,
+    AGE INT,
+    DEPARTMENT VARCHAR(50) NOT NULL,
+    SALARY INT,
+    JOININGDATE DATE NOT NULL,
+    MANAGERID INT NULL
+);
+
+INSERT INTO EMPLOYEES_TABLE (EMPID, NAME, AGE, DEPARTMENT, SALARY, JOININGDATE, MANAGERID) VALUES
+(1, 'RAMESH', 30, 'IT', 125000, '2019-05-15', NULL),
+(2, 'BHAVANI', 24, 'SOFTWARE', 40000, '2020-06-20', 1),
+(3, 'TRINADH', 35, 'CIVIL', 90000, '2018-03-10', NULL),
+(4, 'SAI', 40, 'IT', 50000, '2017-08-25', NULL);
+
+CREATE TABLE IF NOT EXISTS DEPARTMENT (
+    DEPTID INT PRIMARY KEY,
+    DEPTNAME VARCHAR(100) NOT NULL,
+    LOCATION VARCHAR(100) NOT NULL
+);
+
+INSERT INTO DEPARTMENT (DEPTID, DEPTNAME, LOCATION) VALUES
+(1, 'IT', 'HYDERABAD'),
+(2, 'SOFTWARE', 'VIZAG'),
+(3, 'CIVIL', 'TIRUPATHI'),
+(4, 'IT', 'VZM');
+
+CREATE TABLE IF NOT EXISTS PROJECTS (
+    PROJECTID INT PRIMARY KEY,
+    PROJECTNAME VARCHAR(100) NOT NULL,
+    DEPTID INT,
+    FOREIGN KEY (DEPTID) REFERENCES DEPARTMENT(DEPTID) ON DELETE CASCADE
+);
+
+INSERT INTO Projects (ProjectID, ProjectName, DeptID) VALUES
+(101, 'BFS', 1),
+(102, 'GCP', 2),
+(103, 'CONSTRUCTION', 3),
+(104, 'TODO PROJECT', 4);
+
+###############################################################################
+1.Find the second-highest salary from the Employees table.
+SELECT DISTINCT salary
+FROM EMPLOYEES_TABLE
+ORDER BY salary DESC
+LIMIT 1 OFFSET 1;
+
+2.Find employees who earn more than the average salary of their department.
+SELECT E.EMPID, E.NAME, E.DEPARTMENT, E.SALARY
+FROM EMPLOYEES_TABLE E
+WHERE E.SALARY > (
+    SELECT AVG(E2.SALARY)
+    FROM EMPLOYEES_TABLE E2
+    WHERE E2.DEPARTMENT = E.DEPARTMENT
+);
+
+3.Find employees who don’t have a manager.
+SELECT * FROM EMPLOYEES_TABLE 
+WHERE MANAGERID IS NULL;
+
+4.Retrieve employees who have the same salary as another employee.
+SELECT E.EMPID,E.NAME,E.SALARY,E.DEPTID 
+FROM EMPLOYEES_TABLE E
+JOIN EMPLOYEES_TABLE E2
+ON E.SALARY = E2.SALARY AND E.EMPID <> E2.EMPID
+ORDER BY E.SALARY;
+
+5.List employees who joined in the last 6 months dynamically.
+SELECT EMPID,NAME,DEPTID,SALARY,JOININGDATE
+FROM EMPLOYEES_TABLE
+WHERE JOININGDATE >= DATEADD(MONTH,-6,GETDATE());
+
+6.Get the names and salaries of employees earning more than 60,000.
+SELECT NAME, SALARY
+FROM EMPLOYEES_TABLE
+WHERE SALARY > 60000;
+
+7.Get the total number of employees in each department.
+SELECT DEPARTMENT,COUNT(*) AS TOTAL_EMPLOYEES
+FROM EMPLOYEES_TABLE
+GROUP BY DEPARTMENT;
+
+8.Retrieve the highest and lowest salaries from the Employees table.
+SELECT 
+    MAX(SALARY) AS HighestSalary, 
+    MIN(SALARY) AS LowestSalary
+FROM EMPLOYEES_TABLE;
+
+9.Retrieve all details of employees who work in the 'IT' department.
+SELECT * FROM EMPLOYEES_TABLE 
+WHERE DEPARTMENT='IT'
+
+10.Increase the salary by 5% for employees who joined before '2025-03-06'.
+UPDATE EMPLOYEES_TABLE
+SET SALARY = SALARY * 1.05
+WHERE JOININGDATE < '2025-03-06';
+
+11.Update the department of an employee with EmpID = 4  to 'IT'.
+UPDATE EMPLOYEES_TABLE
+SET DEPARTMENT = "HR"
+WHERE EMPID=4;
+
+12.Set the salary of all employees in the 'IT' department to 100000.
+UPDATE EMPLOYEES_TABLE
+SET SALARY = '100000'
+WHERE DEPARTMENT='IT'
+
+13.Add a column PhoneNumber (VARCHAR) to the Employees table.
+ALTER TABLE EMPLOYEES_TABLE
+ADD COLUMN PHONENUMBER INT;
+
+14.Change the datatype of the Name column to VARCHAR(150).
+ALTER TABLE EMPLOYEES_TABLE
+MODIFY COLUMN NAME VARCHAR(150) NOT NULL;
+
+15.Get the average salary of employees in each department.
+SELECT DEPARTMENT,AVG(SALARY) AS AVG_SALARY
+FROM EMPLOYEES_TABLE
+GROUP BY DEPARTMENT;
+
+16.Retrieve the employee with the highest salary in each department.
+SELECT E.EMPID,E.NAME,E.DEPARTMENT,E.SALARY
+FROM EMPLOYEES_TABLE E
+WHERE E.SALARY = (
+  SELECT MAX(SALARY)
+  FROM EMPLOYEES_TABLE E2
+  WHERE E2.DEPARTMENT = E.DEPARTMENT
+);
+
+###################################################################################
+17.Find the total salary paid to employees per department.
+SELECT DEPARTMENT,SUM(SALARY) AS TOTAL_SALARY
+FROM EMPLOYEES_TABLE
+GROUP BY DEPARTMENT;
+##################################################################################
+18.List employees who work in the same department as ‘RAMESH’.
+SELECT NAME FROM EMPLOYEES_TABLE
+WHERE DEPARTMENT = (
+  SELECT DEPARTMENT FROM EMPLOYEES_TABLE WHERE NAME = 'RAMESH')
+AND NAME <> 'RAMESH'
+######################################################################################
+19.Find the top 3 highest-paid employees.
+SELECT NAME,SALARY 
+FROM EMPLOYEES_TABLE 
+ORDER BY SALARY DESC 
+LIMIT 3;
+#######################################################################################
+20.Find the second highest salary in the company.
+SELECT MAX(SALARY) AS SECOND_HIGHEST_SALARY 
+FROM EMPLOYEES_TABLE 
+WHERE SALARY < (SELECT MAX(SALARY) FROM EMPLOYEES_TABLE);
+######################################################################################
+21.Retrieve departments that have more than 2 employees.
+SELECT DEPARTMENT, COUNT(*) AS EMP_COUNT 
+FROM EMPLOYEES_TABLE 
+GROUP BY DEPARTMENT 
+HAVING COUNT(*) > 2;
+########################################################################################
+22.Find employees who have the same salary as someone else in the company.
+SELECT NAME,SALARY 
+FROM EMPLOYEES_TABLE
+WHERE SALARY IN (
+  SELECT SALARY FROM EMPLOYEES_TABLE
+  GROUP BY SALARY 
+  HAVING COUNT(*) > 1
+)
+#######################################################################################
+23.Find the department with the highest average salary.
+SELECT DEPARTMENT,AVG(SALARY) AS AVG_SALARY
+FROM EMPLOYEES_TABLE
+GROUP BY DEPARTMENT
+ORDER BY SALARY DESC
+LIMIT 1;
+############################################################################################
+24.Find the employee who has been with the company the longest
+SELECT NAME, JOININGDATE 
+FROM EMPLOYEES_TABLE 
+ORDER BY JOININGDATE ASC 
+LIMIT 1;
+###########################################################################################
+25.Find all employees whose name starts with 'S'.
+SELECT * FROM EMPLOYEES_TABLE
+WHERE NAME LIKE 'S%'
+###########################################################################################
+26.Find employees who joined in the last 2 years.
+SELECT NAME, JOININGDATE 
+FROM EMPLOYEES_TABLE 
+WHERE JOININGDATE >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR);
+###########################################################################################
+
 
 
